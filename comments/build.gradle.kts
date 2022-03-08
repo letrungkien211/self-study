@@ -5,6 +5,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.0.11.RELEASE"
 	kotlin("jvm") version "1.6.10"
 	kotlin("plugin.spring") version "1.6.10"
+	kotlin("plugin.serialization") version "1.4.10"
 }
 
 group = "nana.study"
@@ -16,12 +17,19 @@ repositories {
 }
 
 dependencies {
+	implementation(platform("com.amazonaws:aws-java-sdk-bom:1.11.1000"))
+	implementation("com.amazonaws:aws-java-sdk-dynamodb:1.12.172")
+	implementation("aws.sdk.kotlin:dynamodb:0.13.1-beta")
 	implementation("org.springframework.boot:spring-boot-starter-amqp")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.apache.kafka:kafka-streams")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+	implementation("org.reactivestreams:reactive-streams:1.0.3")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.6.0")
+	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.amqp:spring-rabbit-test")
 }
