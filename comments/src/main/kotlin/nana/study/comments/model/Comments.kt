@@ -5,8 +5,7 @@ data class Comment internal constructor(
     val parentId: String,
     val content: String,
     val userId: String,
-    val createdTime: Long?,
-    val modifiedTime: Long?
+    val createdTime: Long? = null,
+    val modifiedTime: Long? = null,
+    val numReplies: Long? = null
 )
-
-data class ParentStats(val parentId: String, val numComments: Long)

@@ -11,10 +11,14 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import nana.study.comments.model.Comment
+import nana.study.comments.utils.CustomException
+import nana.study.comments.utils.CustomExceptionType.ALREADY_EXIST
+import nana.study.comments.utils.CustomExceptionType.NOT_EXIST
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Repository
+import java.time.InstantSource
 import java.util.*
 import kotlin.time.ExperimentalTime
 
@@ -28,20 +32,17 @@ class DynamoDbConfiguration {
             override suspend fun getCredentials() = Credentials("Dummy", "Dummy")
         }
     }
-
-    @Bean
-    fun calendar(): Calendar = Calendar.getInstance()
 }
 
 @ExperimentalTime
 @Repository
 class DynamoDbCommentsRepository @Autowired constructor(
     private val dynamoDbClient: DynamoDbClient,
-    private val calendar: Calendar,
+    private val timeSource: InstantSource,
     private val commentsTableName: String = "Comments"
 ) : ICommentsRepository {
     override suspend fun create(comment: Comment): Comment {
-        val now = calendar.timeInMillis
+        val now = timeSource.instant().toEpochMilli()
         with(
             comment.copy(
                 id = comment.id ?: UUID.randomUUID().toString(),
@@ -59,8 +60,13 @@ class DynamoDbCommentsRepository @Autowired constructor(
                     "createdTime" to AttributeValue.N(createdTime.toString()),
                     "modifiedTime" to AttributeValue.N(modifiedTime.toString())
                 )
+                conditionExpression = "attribute_not_exists(id)"
             }
-            dynamoDbClient.putItem(request)
+            try {
+                dynamoDbClient.putItem(request)
+            } catch (ex: ConditionalCheckFailedException) {
+                throw CustomException(ALREADY_EXIST, "Cannot create item that already exists. id=$id")
+            }
             return this
         }
     }
@@ -77,13 +83,21 @@ class DynamoDbCommentsRepository @Autowired constructor(
     }
 
     override suspend fun update(id: String, content: String) {
-        dynamoDbClient.updateItem(UpdateItemRequest {
-            tableName = commentsTableName
-            key = mapOf("id" to AttributeValue.S(id))
-            updateExpression = "SET content = :c, modifiedTime = :m"
-            expressionAttributeValues =
-                mapOf(":c" to AttributeValue.S(content), ":m" to AttributeValue.N(calendar.timeInMillis.toString()))
-        })
+        try {
+            dynamoDbClient.updateItem(UpdateItemRequest {
+                tableName = commentsTableName
+                key = mapOf("id" to AttributeValue.S(id))
+                updateExpression = "SET content = :c, modifiedTime = :m"
+                expressionAttributeValues =
+                    mapOf(
+                        ":c" to AttributeValue.S(content),
+                        ":m" to AttributeValue.N(timeSource.instant().toEpochMilli().toString())
+                    )
+                conditionExpression = "attribute_exists(id)"
+            })
+        } catch (ex: ConditionalCheckFailedException) {
+            throw CustomException(NOT_EXIST, "Cannot modify item that doesn't exist. id=$id")
+        }
     }
 
     override suspend fun delete(id: String) {
