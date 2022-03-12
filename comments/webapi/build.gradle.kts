@@ -17,6 +17,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":library"))
     implementation(platform("com.amazonaws:aws-java-sdk-bom:1.11.1000"))
     implementation("com.amazonaws:aws-java-sdk-dynamodb:1.12.172")
     implementation("aws.sdk.kotlin:dynamodb:0.13.1-beta")
@@ -35,7 +36,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-rest")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.apache.kafka:kafka-streams")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

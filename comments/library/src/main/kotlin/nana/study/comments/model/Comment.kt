@@ -1,6 +1,6 @@
 package nana.study.comments.model
 
-data class Comment internal constructor(
+data class Comment constructor(
     val id: String?,
     val parentId: String,
     val content: String,
