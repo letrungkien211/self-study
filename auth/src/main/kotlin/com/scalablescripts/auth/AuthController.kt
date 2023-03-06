@@ -33,8 +33,9 @@ class AuthController(private val userService: UserService) {
             return ResponseEntity.badRequest().body(MessageDTO("Invalid password."))
         }
 
-        val issuer = user.id.toString()
-        val jwt = Jwts.builder().setIssuer(issuer)
+        val jwt = Jwts.builder()
+                .setIssuer("http://localhost:8000/auth")
+                .setSubject(user.id.toString())
                 .setExpiration(Date(System.currentTimeMillis() + 3600*24*1000)) // 1 day
                 .signWith(SignatureAlgorithm.HS512, "ZmtkanNhZmRzYWY=").compact()
         val cookie = Cookie("jwt", jwt)
@@ -52,7 +53,7 @@ class AuthController(private val userService: UserService) {
 
         val body = Jwts.parser().setSigningKey("ZmtkanNhZmRzYWY=").parseClaimsJws(jwt).body
 
-        return ResponseEntity.ok(this.userService.getById(body.issuer.toInt()));
+        return ResponseEntity.ok(this.userService.getById(body.subject.toInt()));
     }
 
     @PostMapping("logout")
